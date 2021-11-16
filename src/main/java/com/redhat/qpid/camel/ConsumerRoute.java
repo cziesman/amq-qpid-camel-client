@@ -11,15 +11,15 @@ public class ConsumerRoute extends RouteBuilder {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConsumerRoute.class);
 
-    @Value("${destination.address}")
-    private String destinationName;
+    @Value("${from.endpoint}")
+    private String fromEndpoint;
 
     @Override
     public void configure() {
 
-        LOG.debug(destinationName);
+        LOG.debug(fromEndpoint);
 
-        from(destinationName)
+        from(fromEndpoint)
                 .log("============= Received: ${body}");
     }
 }
