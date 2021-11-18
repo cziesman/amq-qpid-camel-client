@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jms.connection.CachingConnectionFactory;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -48,7 +49,7 @@ public class JmsConfig {
     private String verifyHostName;
 
     @Bean
-    public AMQPComponent amqpComponent(JmsPoolConnectionFactory connectionFactory) {
+    public AMQPComponent amqpComponent(CachingConnectionFactory connectionFactory) {
 
         AMQPComponent jms = new AMQPComponent();
         jms.setConnectionFactory(connectionFactory);
@@ -57,17 +58,17 @@ public class JmsConfig {
     }
 
     @Bean
-    public JmsPoolConnectionFactory jmsPoolConnectionFactory() {
+    public CachingConnectionFactory cachingConnectionFactory() throws Exception {
 
-        JmsPoolConnectionFactory pooledConnectionFactory = new JmsPoolConnectionFactory();
-        pooledConnectionFactory.setConnectionFactory(jmsConnectionFactory());
-        pooledConnectionFactory.setMaxConnections(brokerMaxConnections);
-        pooledConnectionFactory.setUseProviderJMSContext(true);
+        CachingConnectionFactory cachingConnectionFactory = new CachingConnectionFactory();
+        cachingConnectionFactory.setSessionCacheSize(brokerMaxConnections);
+        cachingConnectionFactory.setTargetConnectionFactory(connectionFactory());
+        cachingConnectionFactory.afterPropertiesSet();
 
-        return pooledConnectionFactory;
+        return cachingConnectionFactory;
     }
 
-    protected JmsConnectionFactory jmsConnectionFactory() {
+    protected JmsConnectionFactory connectionFactory() {
 
         JmsConnectionFactory factory = new JmsConnectionFactory();
         factory.setRemoteURI(remoteUri());
@@ -90,6 +91,6 @@ public class JmsConfig {
 
         LOG.debug(uriComponents.toUriString());
 
-        return uriComponents.toUriString();
+        return String.format("failover:(%s)", uriComponents.toUriString());
     }
 }
